@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oliver's Tic-Tac-Toe</title>
+    <style>
+        /*
+        * CSS from your RPS game adapted for Tic-Tac-Toe with Glassmorphism
+        * Also includes Apple-like font and colors for consistency.
+        */
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;600;700&display=swap');
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --text-color: #f0f0f0;
+            --primary-color: #007aff; /* Apple Blue */
+            --secondary-color: #ff9500; /* Apple Orange */
+            --accent-color: #34c759; /* Apple Green (for O) */
+            --danger-color: #ff3b30; /* Apple Red (for X) */
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Full viewport height */
+            margin: 0;
+            padding: 20px; /* Add some padding for smaller screens */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+            background: linear-gradient(135deg, #1d2b64, #f8cdda); /* Subtle gradient background */
+            color: var(--text-color);
+            overflow: auto; /* Allow scrolling if content overflows */
+        }
+
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px var(--shadow-color);
+            text-align: center;
+            max-width: 450px; /* Max width for larger screens */
+            width: 100%; /* Full width on smaller screens */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+
+        input[type="text"] {
+            padding: 12px 15px;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            font-size: 1em;
+            flex-grow: 1;
+            min-width: 150px; /* Minimum width for input fields */
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.3);
+            min-width: 100px;
+        }
+
+        button:hover {
+            background-color: #006ee6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 122, 255, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 122, 255, 0.2);
+        }
+
+        button:disabled {
+            background-color: rgba(100, 100, 100, 0.5);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .message {
+            font-size: 1em;
+            color: var(--text-color);
+            margin-top: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        /* Scoreboard (adapted from RPS) */
+        #scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            gap: 10px; /* Spacing between score boxes */
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+        .scoreBox {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            border: 1px solid var(--glass-border);
+            min-width: 120px; /* Ensure score boxes don't get too small */
+            box-sizing: border-box;
+        }
+        .scoreBox span {
+            display: block; /* Stack name and score */
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        .scoreBox strong {
+            font-size: 1.5em; /* Larger score numbers */
+            color: var(--secondary-color);
+        }
+        .scoreBox.player-x strong { color: var(--danger-color); }
+        .scoreBox.player-o strong { color: var(--accent-color); }
+
+
+        /* Tic-Tac-Toe Board */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 100%; /* Make board responsive to container width */
+            max-width: 300px; /* Limit max size */
+            aspect-ratio: 1 / 1; /* Keep it square */
+            margin: 20px auto;
+            border: 2px solid var(--glass-border);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5em;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            user-select: none;
+            color: white; /* Default color for X/O */
+        }
+
+        .cell:hover:not(.taken) {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .cell:active:not(.taken) {
+            transform: scale(0.95);
+        }
+
+        .cell.taken {
+            cursor: default;
+        }
+
+        .cell.x {
+            color: var(--danger-color); /* Red for X */
+        }
+        .cell.o {
+            color: var(--accent-color); /* Green for O */
+        }
+
+        #gameStatus {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        #gameCodeDisplay, #playerSymbolDisplay {
+            font-size: 1.1em;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+
+        .-buttons button {
+            background-color: var(--accent-color); /* Green for s */
+            box-shadow: 0 4px 10px rgba(52, 199, 89, 0.3);
+        }
+
+        .-buttons button:hover {
+            background-color: #2da44e;
+            box-shadow: 0 6px 12px rgba(52, 199, 89, 0.4);
+        }
+
+        #leaveGameBtn, #leaveBtnFromResult { /* Apply to both leave buttons */
+            background-color: var(--danger-color); /* Red for leaving */
+            box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3);
+        }
+
+        #leaveGameBtn:hover, #leaveBtnFromResult:hover {
+            background-color: #e6392f;
+            box-shadow: 0 6px 12px rgba(255, 59, 48, 0.4);
+        }
+
+        /* Players display */
+        #playersList {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        #playersList li {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #playersList li.current-turn {
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+        #playersList li.me {
+            border: 2px solid var(--secondary-color);
+        }
+        #playersList li.taken-x {
+            color: var(--danger-color);
+        }
+        #playersList li.taken-o {
+            color: var(--accent-color);
+        }
+/* In your existing style.css file */
+#quickEmojiPicker {
+    margin-top: 5px;
+    margin-bottom: 10px; /* Or wherever you place it */
+}
+
+.emoji-btn {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-size: 1.5em; /* Adjust size as needed */
+    cursor: pointer;
+    margin-right: 5px;
+    transition: background-color 0.2s;
+}
+
+.emoji-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.emoji-btn:active {
+    background-color: #d0d0d0;
+}
+        /* Result Screen (Similar to RPS result screen) */
+        #resultScreen {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        #resultText {
+            font-size: 2em;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #resultScreen p {
+            font-size: 1.1em;
+            margin: 5px 0;
+            text-align: center;
+        }
+
+        /* Animations (from RPS) */
+        #resultText.animate-win {
+            animation: pulseWin 0.8s;
+            color: var(--accent-color); /* Green for win */
+        }
+        #resultText.animate-lose {
+            animation: pulseLose 0.8s;
+            color: var(--danger-color); /* Red for lose */
+        }
+        #resultText.animate-tie {
+            animation: shakeTie 0.6s;
+            color: var(--secondary-color); /* Orange for tie */
+        }
+
+        @keyframes pulseWin {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+        @keyframes pulseLose {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+        @keyframes shakeTie {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Loader animation (from RPS) */
+        .loader {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            margin: 0 auto 10px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Oliver's Tic-Tac-Toe</h1>
+
+        <div id="lobby-section" class="game-section">
+            <div class="input-group">
+                <input type="text" id="playerNameInput" placeholder="Your Name" maxlength="15">
+                <button id="createGameBtn">Create Game</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="gameCodeInput" placeholder="Enter Room Code">
+                <button id="joinGameBtn">Join Game</button>
+            </div>
+            <p id="lobbyMessage" class="message"></p>
+        </div>
+
+        <div id="game-section" class="game-section hidden">
+            <p id="gameCodeDisplay"></p>
+            <p id="playerSymbolDisplay"></p>
+
+            <div id="scoreboard">
+                <div id="playerXScoreBox" class="scoreBox player-x">
+                    <span id="playerXName">Player X</span>
+                    Wins: <strong id="playerXWins">0</strong> | Losses: <strong id="playerXLosses">0</strong> | Ties: <strong id="playerXTies">0</strong>
+                </div>
+                <div id="playerOScoreBox" class="scoreBox player-o">
+                    <span id="playerOName">Player O</span>
+                    Wins: <strong id="playerOWins">0</strong> | Losses: <strong id="playerOLosses">0</strong> | Ties: <strong id="playerOTies">0</strong>
+                </div>
+            </div>
+
+            <ul id="playersList">
+                </ul>
+
+            <p id="gameStatus">Waiting for game to start...</p>
+
+            <div class="board" id="ticTacToeBoard">
+                <div class="cell" data-cell-index="0"></div>
+                <div class="cell" data-cell-index="1"></div>
+                <div class="cell" data-cell-index="2"></div>
+                <div class="cell" data-cell-index="3"></div>
+                <div class="cell" data-cell-index="4"></div>
+                <div class="cell" data-cell-index="5"></div>
+                <div class="cell" data-cell-index="6"></div>
+                <div class="cell" data-cell-index="7"></div>
+                <div class="cell" data-cell-index="8"></div>
+            </div>
+
+            <div class="-buttons">
+                <button id="playAgainBtn" class="hidden">Play Again</button>
+                <button id="leaveGameBtn">Leave Game</button>
+            </div>
+
+
+            </div>
+            </div>
+
+        <div id="resultScreen" class="game-section hidden">
+            <div id="resultText"></div>
+            <p id="resCurrentPlayerInfo"></p>
+            <p id="resOpponentPlayerInfo"></p>
+            <div class="-buttons">
+                <button id="playAgainBtnFromResult">Play Again</button>
+                <button id="leaveBtnFromResult">Leave Game</button>
+            </div>
+   
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>
